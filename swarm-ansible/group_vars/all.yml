@@ -1,0 +1,17 @@
+docker_apt_channel: stable
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+# interfejs/IP który ma być reklamowany w swarm (najprościej: ansible_host)
+swarm_advertise_addr: "{{ ansible_host }}"
+
+# otwierane porty Swarm (jeśli używasz UFW)
+swarm_ports:
+  - { port: 2377, proto: "tcp" }
+  - { port: 7946, proto: "tcp" }
+  - { port: 7946, proto: "udp" }
+  - { port: 4789, proto: "udp" }

@@ -1,0 +1,772 @@
+#########################################################3
+Docker
+#########################################################
+
+
+ 8  docker version
+    9  docker images
+   10  docker search ubuntu
+   11  docker pull ubuntu
+   12  docker images
+   13  docker run -it ubuntu /bin/echo "Witaj w kontenerze"
+   14  docker ps -a
+   15  docker ps
+   16  docker run -it ubuntu /bin/bash
+   17  docker ps
+   18  docker ps -a
+   19  docker run -it ubuntu /bin/bash
+   20  docker ps -a
+   21  docker ps
+   22  docker attach angry_booth 
+   23  docker ps
+   24  docker ps -a
+   25  docker run -it ubuntu /bin/bash
+   26  docker ps
+   27  docker kill suspicious_tharp 
+   28  docker ps
+   29  docker ps -a
+   30  docker pull alpine
+   31  docker images
+   32  docker pull debian
+   33  docker images
+   34  docker run ubuntu /bin/bash -c "apt update; apt -y install nginx"
+
+   36  docker ps
+   37  docker ps -a
+   38  docker commit 14dc8d4a535c alx.pl/ubunginx
+   39  docker images
+   40  docker run ubuntu /bin/bash -c "apt update; apt -y install apache2"
+   41  docker ps -a
+   42  docker commit 06e6999f7442 alx.pl/ubuapache2
+   43  docker images
+   44  docker run alx.pl/ubunginx:latest /usr/bin/which nginx
+   45  docker run -t -d -p 8081:80 alx.pl/ubunginx:latest /usr/sbin/nginx -g "daemon off;"
+   46  docker ps
+   47  curl localhost:8081
+   48  docker exec pedantic_khayyam /bin/bash -c 'echo "Nginx na kontenerze" > /var/www/html/index.html'
+   49  curl localhost:8081
+
+Dockerfile
+
+FROM ubuntu
+MAINTAINER alx <alx.pl>
+
+RUN apt-get update
+RUN apt-get -y install tzdata
+RUN apt-get -y install apache2
+RUN echo "Dockerfile Test on Apache2" > /var/www/html/index.html
+
+EXPOSE 80
+CMD ["/usr/sbin/apachectl", "-D", "FOREGROUND"]
+
+
+
+66  nano Dockerfile
+   67  docker build -t alx.pl/ubuntu-apache2:latest ./
+   68  docker images
+   69  cat Dockerfile 
+   70  docker run -t -d -p 8085:80 alx.pl/ubuntu-apache2:latest
+   71  docker ps
+   72  curl localhost:8085
+
+Opis komend Dockerfile
+https://imgur.com/a/JqbibRp
+
+Docker Compose
+
+
+FROM ubuntu
+
+
+ENV ubuntu_FRONTEND=noninteractive
+
+RUN apt-get update
+RUN apt-get -y install tzdata
+RUN apt-get -y install apache2
+
+EXPOSE 80
+CMD ["/usr/sbin/apachectl", "-D", "FOREGROUND"]
+
+
+docker-compose.yml
+services:
+  db:
+    image: docker.io/library/mariadb
+    volumes:
+      - /var/lib/docker/disk01:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: ubuntu
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: ubuntu_db
+    ports:
+      - "3306:3306"
+  web:
+    build: .
+    ports:
+      - "80:80"
+    volumes:
+      - /var/lib/docker/disk02:/usr/share/nginx/html
+      
+      
+      
+       131  docker-compose up -d
+  132  docker ps
+  133  curl localhost
+
+  135  apt -y install mariadb-client
+
+  138  mysql -h 127.0.0.1 -u ubuntu -p
+  139  docker ps
+  140  docker-compose ps
+  141  docker-compose logs
+  142  docker-compose exec db /bin/bash
+  143  docker-compose ps
+  144  docker-compose stop
+
+
+  150  docker network ls
+  151  docker network inspect bridge 
+  152  docker run -itd -v vol01:/mnt debian
+  153  docker network ls
+  154  docker network inspect bridge 
+  155  docker run ubuntu /bin/bash -c "apt update; apt -y install iproute2; /usr/sbin/ip route"
+  156  docker network create --subnet 192.168.100.0/24 net01
+  157  docker network ls
+  158  docker ps
+  159  docker network connect --ip 192.168.100.10 net01 stoic_varahamihira 
+  160  docker exec stoic_varahamihira /usr/sbin/ip route
+  161  docker exec stoic_varahamihira /bin/bash -c "apt update; apt -y install iproute2"
+  162  docker exec stoic_varahamihira /usr/sbin/ip route
+  163  docker network disconnect net01 stoic_varahamihira 
+  164  docker exec stoic_varahamihira /usr/sbin/ip route
+  165  docker network connect net01 stoic_varahamihira 
+  166  docker exec stoic_varahamihira /usr/sbin/ip route
+
+
+Konfiguracja ipvlan:
+bash
+# Tworzenie sieci ipvlan
+docker network create -d ipvlan \
+  --subnet=192.168.1.0/24 \
+  --gateway=192.168.1.1 \
+  -o ipvlan_mode=l2 \
+  -o parent=eth0 \
+  moja-ipvlan-siec
+
+Charakterystyka ipvlan:
+Brak NAT: Kontenery mają adresy w tej samej sieci co host
+Bezpośrednia łączność: Kontenery widoczne jak fizyczne maszyny w sieci
+Brak port mapping: Nie potrzebujesz mapować portów
+Lepsza wydajność: Pomija warstwę NAT i bridgePrzykład praktyczny:
+bash
+# Kontener w sieci ipvlan
+docker run -d --name web --network moja-ipvlan-siec --ip 192.168.1.101 nginx
+# Z hosta lub innej maszyny w sieci:
+curl 192.168.1.101  # działa bezpośrednio!
+
+
+
+
+
+
+Instalacja GUI Portainer
+
+docker run -d -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer
+
+podłączamy się przeglądarką na port 9000 i ustawiamy hasło admina
+
+
+Monitoring
+
+
+ 173  docker exec -it stoic_varahamihira /bin/bash
+  174  docker stats
+  175  docker attach stoic_varahamihira 
+  176  docker stats
+  177  docker stats --no-stream
+  178  docker stats sleepy_khorana --no-stream
+  179  history
+  180  docker run -t -d -p 8085:80 alx.pl/ubuntu-apache2:latest
+  181  docker ps
+  182  docker stats --no-stream
+  183  docker stats admiring_feynman --no-stream
+  184  docker stats --no-stream --format "table {{.ID}} {{.CPUPerc}}"
+
+dd if=/dev/zero of=/dev/null  # generowanie obciążenia 1CPU
+
+
+
+
+Wdrożenie Prometheusa w środowisku Docker 
+1. Podstawowe wdrożenie z Docker Compose
+Plik docker-compose.yml
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  monitoring:
+    driver: bridge
+    
+    
+    
+    
+Plik prometheus.yml
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Monitorowanie samego Prometheusa
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Monitorowanie Node Exporter
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # Monitorowanie cAdvisor
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # Monitorowanie kontenerów Docker
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['host.docker.internal:9323']
+2. Monitorowanie kontenerów Docker
+Włącz metryki Dockera
+Edytuj lub utwórz plik /etc/docker/daemon.json:
+
+
+{
+  "metrics-addr": "0.0.0.0:9323",
+  "experimental": true
+}
+Lub użyj zmiennych środowiskowych przy uruchamianiu dockera:
+
+
+docker run -d \
+  --name my-container \
+  -p 9323:9323 \
+  -e "DOCKER_METRICS_PORT=9323" \
+  your-application
+Dodaj konfigurację do prometheus.yml
+
+- job_name: 'docker'
+  static_configs:
+    - targets: ['host.docker.internal:9323', 'docker-host:9323']
+  metrics_path: /metrics
+3. Zaawansowane wdrożenie z Alertmanagerem
+Rozszerzony docker-compose.yml
+
+alertmanager:
+  image: prom/alertmanager:latest
+  container_name: alertmanager
+  restart: unless-stopped
+  volumes:
+    - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    - alertmanager_data:/alertmanager
+  command:
+    - '--config.file=/etc/alertmanager/alertmanager.yml'
+    - '--storage.path=/alertmanager'
+  ports:
+    - "9093:9093"
+  networks:
+    - monitoring
+Plik alertmanager.yml
+
+route:
+  group_by: ['alertname']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'web.hook'
+
+receivers:
+  - name: 'web.hook'
+    webhook_configs:
+      - url: 'http://webhook:5000/'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']
+4. Monitorowanie własnych aplikacji
+Przykład aplikacji z metrykami (Python/Flask)
+
+from flask import Flask
+from prometheus_flask_exporter import PrometheusMetrics
+
+app = Flask(__name__)
+metrics = PrometheusMetrics(app)
+
+@app.route('/')
+def hello():
+    return "Hello World!"
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+Dockerfile dla aplikacji
+dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 5000
+CMD ["python", "app.py"]
+Dodaj do docker-compose.yml
+
+myapp:
+  build: ./myapp
+  container_name: myapp
+  restart: unless-stopped
+  ports:
+    - "5000:5000"
+  networks:
+    - monitoring
+Dodaj do prometheus.yml
+yaml
+- job_name: 'myapp'
+  static_configs:
+    - targets: ['myapp:5000']
+5. Uruchomienie i konfiguracja
+Kroki wdrożenia:
+
+# 1. Utwórz katalog projektu
+mkdir prometheus-monitoring && cd prometheus-monitoring
+
+# 2. Utwórz pliki konfiguracyjne
+touch docker-compose.yml prometheus.yml
+
+# 3. Wypełnij pliki konfiguracyjne (jak wyżej)
+
+# 4. Uruchom stack
+docker-compose up -d
+
+# 5. Sprawdź działanie
+docker-compose ps
+curl http://localhost:9090/-/healthy
+Dostęp do usług:
+Prometheus: http://localhost:9090
+
+Grafana: http://localhost:3000 (admin/admin)
+
+Node Exporter: http://localhost:9100/metrics
+
+cAdvisor: http://localhost:8080
+
+6. Konfiguracja Grafany
+Dodaj źródło danych Prometheus:
+Otwórz http://localhost:3000
+
+Zaloguj się (admin/admin)
+
+Configuration → Data Sources → Add data source
+
+Wybierz Prometheus
+
+URL: http://prometheus:9090
+
+Save & Test
+
+Importuj gotowe dashboards:
+Node Exporter: id 1860
+
+Docker: id 193
+
+cAdvisor: id 14282
+
+7. Praktyczne wskazówki
+Bezpieczeństwo:
+
+# Dodaj autoryzację podstawową
+prometheus:
+  environment:
+    - BASIC_AUTH_USER=admin
+    - BASIC_AUTH_PASSWORD=secret
+    
+    
+    Docker Swarm
+    
+Dockerfile
+    FROM ubuntu
+
+RUN apt-get update
+RUN apt-get -y install nginx
+RUN echo "Nginx on node01" > /var/www/html/index.html
+
+EXPOSE 80
+CMD ["/usr/sbin/nginx", "-g", "daemon off;"]
+    
+    
+     cd swarm/
+  194  nano Dockerfile
+  195  scp Dockerfile automation@10.4.0.200:
+  196  docker build -t nginx-server:latest .
+
+  200  docker service create --name swarm_cluster --replicas=2 -p 80:80 nginx-server:latest
+  201  docker service ls
+  202  docker service ps swarm_cluster 
+  203  curl 10.4.0.10
+  204  docker service scale swarm_cluster=4
+  205  docker service ps swarm_cluster
+
+##########################################################################
+Docker Swarm na 5 hostach Ubuntu przez Ansible
+#######################################################################
+
+1) Struktura projektu Ansible 
+swarm-ansible/
+├─ ansible.cfg
+├─ inventory.ini
+├─ group_vars/
+│  └─ all.yml
+├─ 01-docker.yml
+├─ 02-swarm.yml
+└─ 03-test-stack.yml
+
+ansible.cfg
+[defaults]
+inventory = inventory.ini
+host_key_checking = False
+retry_files_enabled = False
+interpreter_python = auto_silent
+
+2) Inventory dla 5 hostów (3 manager + 2 worker)
+inventory.ini
+[swarm_managers]
+swarm1 ansible_host=10.4.0.10
+swarm2 ansible_host=10.0.0.12
+swarm3 ansible_host=10.0.0.13
+
+[swarm_workers]
+swarm4 ansible_host=10.4.0.200
+swarm5 ansible_host=10.0.0.15
+
+[swarm:children]
+swarm_managers
+swarm_workers
+
+[swarm:vars]
+ansible_user=automation
+
+group_vars/all.yml
+docker_apt_channel: stable
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+# interfejs/IP który ma być reklamowany w swarm (najprościej: ansible_host)
+swarm_advertise_addr: "{{ ansible_host }}"
+
+# otwierane porty Swarm (jeśli używasz UFW)
+swarm_ports:
+  - { port: 2377, proto: "tcp" }
+  - { port: 7946, proto: "tcp" }
+  - { port: 7946, proto: "udp" }
+  - { port: 4789, proto: "udp" }
+
+3) Playbook 01 – instalacja Dockera na Ubuntu (oficjalne repo Dockera)
+
+Ten playbook:
+
+usuwa konflikty (opcjonalnie),
+
+dodaje klucz GPG + repo Dockera,
+
+instaluje Docker Engine,
+
+dorzuca zależności do modułów Ansible community.docker (Docker SDK for Python na hoście).
+
+01-docker.yml
+- name: Install Docker Engine on Ubuntu (official repo)
+  hosts: swarm
+  become: true
+  tasks:
+    - name: Base packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - python3-pip
+        update_cache: true
+
+    # (opcjonalnie) usuń konflikty, jeśli hosty miały docker.io itd.
+    - name: Remove conflicting packages (optional but safe)
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose
+          - docker-compose-v2
+          - docker-doc
+          - podman-docker
+          - containerd
+          - runc
+        state: absent
+      ignore_errors: true
+
+    - name: Create keyrings dir
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Add Docker GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Add Docker apt repository
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc]
+          https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} {{ docker_apt_channel }}
+        state: present
+        filename: docker
+
+    - name: Install Docker packages
+      ansible.builtin.apt:
+        name: "{{ docker_packages }}"
+        update_cache: true
+
+    - name: Enable and start docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    # wymagane dla community.docker.* (docker_swarm, docker_stack itd.)
+    - name: Install Docker SDK for Python (for Ansible modules)
+      ansible.builtin.pip:
+        name: docker
+
+
+Źródło instalacji Dockera na Ubuntu (repo + pakiety) jest w oficjalnej dokumentacji.
+Moduł community.docker.docker_swarm wymaga Docker API i Docker SDK for Python na hoście wykonującym moduł.
+
+4) Playbook 02 – inicjalizacja Swarm i dołączanie węzłów
+
+Ten playbook:
+
+(opcjonalnie) otwiera porty w UFW,
+
+swarm1 inicjuje klaster,
+
+zbiera tokeny join,
+
+dołącza pozostałe managery,
+
+dołącza workery.
+
+02-swarm.yml
+- name: Create / Join Docker Swarm
+  hosts: swarm
+  become: true
+  collections:
+    - community.docker
+
+  pre_tasks:
+    - name: (Optional) Enable UFW
+      ansible.builtin.command: ufw --force enable
+      changed_when: false
+      failed_when: false
+
+    - name: (Optional) Allow Swarm ports in UFW
+      ansible.builtin.command: "ufw allow {{ item.port }}/{{ item.proto }}"
+      loop: "{{ swarm_ports }}"
+      changed_when: false
+      failed_when: false
+
+  tasks:
+    - name: Init swarm on first manager
+      community.docker.docker_swarm:
+        state: present
+        advertise_addr: "{{ swarm_advertise_addr }}"
+      when: inventory_hostname == groups['swarm_managers'][0]
+      register: swarm_init
+
+    - name: Read join tokens from first manager
+      community.docker.docker_swarm_info:
+      delegate_to: "{{ groups['swarm_managers'][0] }}"
+      run_once: true
+      register: swarm_info
+
+    - name: Join other managers
+      community.docker.docker_swarm:
+        state: join
+        advertise_addr: "{{ swarm_advertise_addr }}"
+        remote_addrs:
+          - "{{ hostvars[groups['swarm_managers'][0]].ansible_host }}:2377"
+        join_token: "{{ swarm_info.swarm_facts.JoinTokens.Manager }}"
+      when:
+        - inventory_hostname in groups['swarm_managers']
+        - inventory_hostname != groups['swarm_managers'][0]
+
+    - name: Join workers
+      community.docker.docker_swarm:
+        state: join
+        advertise_addr: "{{ swarm_advertise_addr }}"
+        remote_addrs:
+          - "{{ hostvars[groups['swarm_managers'][0]].ansible_host }}:2377"
+        join_token: "{{ swarm_info.swarm_facts.JoinTokens.Worker }}"
+      when: inventory_hostname in groups['swarm_workers']
+
+
+Dokumentacja portów Swarm/overlay (2377/7946/4789) jest w Docker docs.
+Dokumentacja docker_swarm (init/join) i wymagania (Docker SDK for Python) – w Ansible docs.
+
+5) Playbook 03 – test: overlay network + prosty serwis
+
+Najprościej: stwórz overlay i wystaw usługę (np. nginx) jako test routingu.
+
+03-test-stack.yml
+- name: Deploy a test service to Swarm
+  hosts: swarm_managers[0]
+  become: true
+  collections:
+    - community.docker
+
+  tasks:
+    - name: Create overlay network
+      community.docker.docker_network:
+        name: test-net
+        driver: overlay
+        scope: swarm
+
+    - name: Deploy nginx service
+      community.docker.docker_swarm_service:
+        name: nginx-test
+        image: nginx:alpine
+        networks:
+          - name: test-net
+        publish:
+          - published_port: 8080
+            target_port: 80
+        replicas: 2
+        state: present
+
+
+Moduły do usług Swarm są w community.docker (np. docker_swarm_service).
+
+6) Uruchomienie – dokładna kolejność
+
+Z katalogu projektu:
+
+Sprawdź SSH:
+
+ansible -i inventory.ini swarm -m ping
+
+
+Zainstaluj Dockera:
+
+ansible-playbook 01-docker.yml
+
+
+Zbuduj Swarm (init + join):
+
+ansible-playbook 02-swarm.yml
+
+
+Wdróż test:
+
+ansible-playbook 03-test-stack.yml
+
+
+Weryfikacja (na managerze):
+
+docker node ls
+docker service ls
+docker service ps nginx-test

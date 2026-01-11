@@ -1,0 +1,51 @@
+- name: Create / Join Docker Swarm
+  hosts: swarm
+  become: true
+  collections:
+    - community.docker
+
+  pre_tasks:
+    - name: (Optional) Enable UFW
+      ansible.builtin.command: ufw --force enable
+      changed_when: false
+      failed_when: false
+
+    - name: (Optional) Allow Swarm ports in UFW
+      ansible.builtin.command: "ufw allow {{ item.port }}/{{ item.proto }}"
+      loop: "{{ swarm_ports }}"
+      changed_when: false
+      failed_when: false
+
+  tasks:
+    - name: Init swarm on first manager
+      community.docker.docker_swarm:
+        state: present
+        advertise_addr: "{{ swarm_advertise_addr }}"
+      when: inventory_hostname == groups['swarm_managers'][0]
+      register: swarm_init
+
+    - name: Read join tokens from first manager
+      community.docker.docker_swarm_info:
+      delegate_to: "{{ groups['swarm_managers'][0] }}"
+      run_once: true
+      register: swarm_info
+
+    - name: Join other managers
+      community.docker.docker_swarm:
+        state: join
+        advertise_addr: "{{ swarm_advertise_addr }}"
+        remote_addrs:
+          - "{{ hostvars[groups['swarm_managers'][0]].ansible_host }}:2377"
+        join_token: "{{ swarm_info.swarm_facts.JoinTokens.Manager }}"
+      when:
+        - inventory_hostname in groups['swarm_managers']
+        - inventory_hostname != groups['swarm_managers'][0]
+
+    - name: Join workers
+      community.docker.docker_swarm:
+        state: join
+        advertise_addr: "{{ swarm_advertise_addr }}"
+        remote_addrs:
+          - "{{ hostvars[groups['swarm_managers'][0]].ansible_host }}:2377"
+        join_token: "{{ swarm_info.swarm_facts.JoinTokens.Worker }}"
+      when: inventory_hostname in groups['swarm_workers']
