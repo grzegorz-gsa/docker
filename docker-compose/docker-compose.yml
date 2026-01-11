@@ -1,0 +1,18 @@
+services:
+  db:
+    image: docker.io/library/mariadb
+    volumes:
+      - /var/lib/docker/disk01:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: ubuntu
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: ubuntu_db
+    ports:
+      - "3306:3306"
+  web:
+    build: .
+    ports:
+      - "80:80"
+    volumes:
+      - /var/lib/docker/disk02:/usr/share/nginx/html
